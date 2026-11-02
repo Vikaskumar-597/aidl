@@ -31,14 +31,176 @@ Step 7: Save and run the application.
 ```
 /*
 Program to print the client/server services using AIDL”.
-Developed by:
-Registeration Number :
+Developed by: Vikaskumar M
+Registeration Number : 212224220122
 */
 ```
+# CLIENT:
+## MainActivity.java
+```python
+package com.example.exp_2client;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.widget.Button;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import com.example.exp_2server.Services;
+import com.example.exp_2client.R;
 
+
+public class MainActivity extends AppCompatActivity {
+    private Services colorService;
+    private boolean isBound = false;
+    private Button btnChangeColor;
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service)
+        {
+            colorService = Services.Stub.asInterface(service);
+            isBound = true;
+            Toast.makeText(MainActivity.this, "Connected",
+                    Toast.LENGTH_SHORT).show();
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+            colorService = null;
+        }
+    };
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        btnChangeColor = findViewById(R.id.btnChangeColor);
+        btnChangeColor.setOnClickListener(v -> {
+            if (isBound && colorService != null) {
+                try {
+                    int randomColor = colorService.getRandomColor();
+                    btnChangeColor.setBackgroundColor(randomColor);
+                } catch (RemoteException e) {
+                    Toast.makeText(this, "Error",
+                            Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Not connected",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to the server's service
+        Intent intent = new Intent("com.example.exp_2server.Services");
+        intent.setPackage("com.example.exp_2server");
+        boolean success = bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        if (!success) {
+            Toast.makeText(this, "Binding failed: Server app not installed or service unavailable", Toast.LENGTH_LONG).show();
+        }
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isBound) {
+            unbindService(connection);
+            isBound = false;
+        }
+    }
+}
+```
+## activity_main.xml
+```python
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+    <Button
+        android:id="@+id/btnChangeColor"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:text="Tap me!"
+        android:textSize="24sp" />
+</LinearLayout>
+```
+## Services.aidl
+```python
+package com.example.exp_2server;
+interface Services {
+    int getRandomColor();
+}
+
+```
+## AndroidManifest.xml
+```python
+<queries>
+        <package android:name="com.example.exp_2server" />
+    </queries>
+```
+
+# SERVER:
+
+## colorservice.java
+```python
+package com.example.exp_2server;
+
+import android.app.Service;
+import android.content.Intent;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.graphics.Color;
+import java.util.Random;
+public class colorservice extends Service {
+    private final Services.Stub binder = new Services.Stub() {
+        @Override
+        public int getRandomColor() throws RemoteException {
+            Random random = new Random();
+            int red = random.nextInt(256);
+            int green = random.nextInt(256);
+            int blue = random.nextInt(256);
+            return Color.rgb(red, green, blue);
+        }
+    };
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+}
+
+```
+## Services.aidl
+```python
+package com.example.exp_2server;
+interface Services {
+    int getRandomColor();
+}
+
+```
+## AndroidManifest.xml
+```python
+<service
+    android:name=".colorservice"
+    android:exported="true"
+    android:enabled="true">
+    <intent-filter>
+        <action android:name="com.example.exp_2server.Services" />
+    </intent-filter>
+</service>
+```
 ## OUTPUT
+<img width="1331" height="735" alt="image" src="https://github.com/user-attachments/assets/e408a226-67a9-4f01-9095-b0fb10f26db9" />
 
+<img width="1330" height="740" alt="image" src="https://github.com/user-attachments/assets/4c4c4eb4-dc96-4bb3-9699-818bd9cd898b" />
 
+<img width="295" height="592" alt="image" src="https://github.com/user-attachments/assets/df47785e-e6bc-4bc3-a005-2e506fa30f68" />
+<img width="286" height="590" alt="image" src="https://github.com/user-attachments/assets/05ba4ed8-7e83-4d1c-97f6-2e52519dc343" />
 
 
 ## RESULT
